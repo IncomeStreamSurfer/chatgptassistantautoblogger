@@ -5,7 +5,7 @@ import csv
 from tqdm import tqdm
 
 # Set your OpenAI API key
-OPENAI_API_TOKEN = "your_token_here"
+OPENAI_API_TOKEN = "your_api_key"
 os.environ["OPENAI_API_KEY"] = OPENAI_API_TOKEN
 
 # Initialize the OpenAI client
@@ -26,7 +26,7 @@ content_plan_file_id = upload_file('2men_it_blog_content_plan_expanded (1).csv',
 assistant = client.beta.assistants.create(
     name="Content Creation Assistant",
     model="gpt-4-1106-preview",
-    instructions="Never invent links or product images Never use sources or footnotes Read internallinks.txt and products.txt - You always choose 5 strictly relevant product images and internal links for the articles. You do not use sources in the outline, you just pick 5 product images that are highly relevant to the article. First you read the attached files and understand them completely, then you create a detailed outline on the blog post topic, including a maximum of 5 HIGHLY relevant internal collection links and product image links. These will finally be used to write an article.",
+    instructions="Include at least 3 real product image URLs in the final articles. Choose only relevant product images Do not invent image links. Never invent links or product images Never use sources or footnotes Read internallinks.txt and products.txt - You always choose 5 strictly relevant product images and internal links for the articles. You do not use sources in the outline, you just pick 5 product images that are highly relevant to the article. First you read the attached files and understand them completely, then you create a detailed outline on the blog post topic, including a maximum of 5 HIGHLY relevant internal collection links and product image links. These will finally be used to write an article.",
     tools=[{"type": "retrieval"}],
     file_ids=[internal_links_file_id, products_file_id, content_plan_file_id]
 )
@@ -51,7 +51,7 @@ def get_internal_links(thread_id, blog_post_idea):
 print (get_internal_links)
 
 def process_blog_post(thread_id, blog_post_idea):
-    outline_request = f"use the product images and internal links from {get_internal_links} and use them to create an outline for an article about {blog_post_idea}' In the outline do not use sources or footnotes, but just add a relevant product image in a relevant section, and a relevant internal link in a relevant section. There is no need for a lot of sources, each article needs a maximum of 5 product images and internal links."
+    outline_request = f"Do not invent image links. use the product images and internal links from {get_internal_links} and use them to create an outline for an article about {blog_post_idea}' In the outline do not use sources or footnotes, but just add a relevant product image in a relevant section, and a relevant internal link in a relevant section. There is no need for a lot of sources, each article needs a maximum of 5 product images and internal links."
     client.beta.threads.messages.create(thread_id=thread_id, role="user", content=outline_request)
     outline_run = client.beta.threads.runs.create(thread_id=thread_id, assistant_id=assistant.id)
     wait_for_run_completion(thread_id, outline_run.id)
@@ -63,7 +63,7 @@ def process_blog_post(thread_id, blog_post_idea):
 
     article = None
     if outline:
-        article_request = f"Never invent links or product images Choose 5 internal links and 5 product images that are relevant to an article and then Write a detailed article based on the following outline:\n{outline}, but put it into a proper title which invites a click, Best X of 2024 and then some other modifiers Title should be around 60 characters. Include the product images and internal links naturally and with relevance inside the article. Use markdown formatting and ensure to use tables and lists to add to formatting. Use 3 relevant product images and internal links maximum. Never invent any internal links."
+        article_request = f"Do not invent image links. You are writing from a first person plural perspective for 2Men. Add a key takeaway table at the top of the article, summarzing the main points. Never invent links or product images Choose 5 internal links and 5 product images that are relevant to an article and then Write a detailed article based on the following outline:\n{outline}, but put it into a proper title which invites a click, Title should be around 60 characters. Include the product images and internal links naturally and with relevance inside the article. Use markdown formatting and ensure to use tables and lists to add to formatting. Use 3 relevant product images and internal links maximum. Never invent any internal links."
         client.beta.threads.messages.create(thread_id=thread_id, role="user", content=article_request)
         article_run = client.beta.threads.runs.create(thread_id=thread_id, assistant_id=assistant.id)
         wait_for_run_completion(thread_id, article_run.id)
