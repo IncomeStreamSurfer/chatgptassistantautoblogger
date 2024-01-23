@@ -77,6 +77,7 @@ def process_content_plan():
     input_file = 'content_plan.csv'
     output_file = 'processed_content_plan.csv'
     processed_rows = []
+    all_fieldnames = set()
 
     with open(input_file, newline='', encoding='utf-8') as csvfile:
         reader = csv.DictReader(csvfile)
@@ -91,9 +92,10 @@ def process_content_plan():
             if outline and article:
                 row.update({'Blog Outline': outline, 'Article': article, 'Processed': 'Yes'})
                 processed_rows.append(row)
+                all_fieldnames.update(row.keys())
 
     with open(output_file, 'w', newline='', encoding='utf-8') as f:
-        writer = csv.DictWriter(f, fieldnames=processed_rows[0].keys())
+        writer = csv.DictWriter(f, fieldnames=all_fieldnames)
         writer.writeheader()
         writer.writerows(processed_rows)
 
