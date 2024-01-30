@@ -114,7 +114,7 @@ def perplexity_research(blog_post_idea):
     headers = {
         "accept": "application/json",
         "content-type": "application/json",
-        "authorization": "Bearer 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"
+        "authorization": "Bearer your_perplexity_key"
     }
 
     response = requests.post(url, json=payload, headers=headers)
