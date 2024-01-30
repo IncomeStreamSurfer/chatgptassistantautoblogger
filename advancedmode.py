@@ -11,7 +11,7 @@ print("Setting OpenAI API Key...")
 os.environ["OPENAI_API_KEY"] = OPENAI_API_TOKEN
 
 # Update your Freeimage.host API Key here
-FREEIMAGE_HOST_API_KEY = "your_free_image_host_key"
+FREEIMAGE_HOST_API_KEY = "your_api_key"
 
 # Initialize the OpenAI client
 print("Initializing OpenAI client...")
@@ -67,7 +67,7 @@ print("Creating OpenAI Assistant...")
 assistant = client.beta.assistants.create(
     name="Content Creation Assistant",
     model="gpt-4-turbo-preview",
-    instructions=f"YOU MUST INCLUDE INTERNAL LINKS FROM brandimagesandlinks.txt - read this first and make sure to include real internal links in the final article in the pillar page When told to use retrieval use retrieval, when told to use code_interpreter use code interpreter. The final content should include internal links from brandimagesandlinks.txt and should include formatting. Your basic steps are: 1. read brandlogo.txt, get the image, create some visualizations of data, store these for the final article. 2. Find relevant brand images and internal links from brandimagesandlinks.txt, create an outline, then write an article with all of this data you've either created or found Copy the tone from example.txt EXACTLY. Read brandimagesandlinks.txt. Use this as a guide to shape the final pillar pages. The pillar pages should follow the length and tone of example.txt. You are PillarPageGPT, aiming to create in-depth and interesting service pages for huntingworld, a Hunting niche website. Every pillar page should include 3 brand images and links to their pillar pages. Ensure the brand image links are accurate. Choose only relevant brand pages. Do not invent image links. Pick 5 strictly relevant brand images and internal links for the articles. First, read the attached files, then create a detailed outline on the blog post topic, including up to 5 highly relevant internal collection links and brand image links.",
+    instructions=f"You must never EVER invent internal links or image links as this can destroy my SEO. YOU MUST INCLUDE INTERNAL LINKS FROM brandimagesandlinks.txt - read this first and make sure to include real internal links in the final article in the pillar page When told to use retrieval use retrieval, when told to use code_interpreter use code interpreter. The final content should include internal links from brandimagesandlinks.txt and should include formatting. Your basic steps are: 1. read brandlogo.txt, get the image, create some visualizations of data, store these for the final article. 2. Find relevant brand images and internal links from brandimagesandlinks.txt, create an outline, then write an article with all of this data you've either created or found Copy the tone from example.txt EXACTLY. Read brandimagesandlinks.txt. Use this as a guide to shape the final pillar pages. The pillar pages should follow the length and tone of example.txt. You are PillarPageGPT, aiming to create in-depth and interesting service pages for tinyhomehub, a tiny home niche website. Every pillar page should include 3 brand images and links to their pillar pages. Ensure the brand image links are accurate. Choose only relevant brand pages. Do not invent image links. Pick 5 strictly relevant brand images and internal links for the articles. First, read the attached files, then create a detailed outline on the blog post topic, including up to 5 highly relevant internal collection links and brand image links.",
     tools=[{"type": "retrieval"}, {"type": "code_interpreter"}],
     file_ids=[internal_links_file_id, content_plan_file_id, brand_plan_file_id, brand_logo_file_id]
 )
@@ -107,14 +107,14 @@ def perplexity_research(blog_post_idea):
             },
             {
                 "role": "user",
-                "content": f"Find some interesting data and facts about {blog_post_idea} and also give in-depth information and up-to-date information about it."
+                "content": f"Find highly specific generalised data about {blog_post_idea} in 2024."
             }
         ]
     }
     headers = {
         "accept": "application/json",
         "content-type": "application/json",
-        "authorization": "Bearer your_perplexity_key"
+        "authorization": "Bearer your_api_key"
     }
 
     response = requests.post(url, json=payload, headers=headers)
@@ -175,7 +175,7 @@ def process_blog_post(thread_id, blog_post_idea):
 
     article = None
     if outline:
-        article_request = f" include real internal links from brandimagesandlinks.txt Based on \n{outline} and Make sure to use a mix of the {image_urls} and brand images. Use grade 7 level US English. Do not use overly creative or crazy language. Write as if writing for The Guardian newspaper.. Just give information. Don't write like a magazine. Use simple language. Do not invent image links. You are writing from a first person plural perspective for the business, refer to it in the first person plural. Add a key takeaway table at the top of the article, summarzing the main points. Never invent links or brand images Choose 5 internal links and 5 brand images that are relevant to a pillar page and then create a pillar page with good formatting based on the following outline:\n{outline}, Use consulting in the title as this is a consulting service subpage., Title should be around 60 characters. Include the brand images and internal links to other pillar pages naturally and with relevance inside the article. Use markdown formatting and ensure to use tables and lists to add to formatting. Use 3 relevant brand images and pillar pages with internal links maximum. Never invent any internal links.  Include all of the internal links and brand images from {outline} Use different formatting to enrich the pillar page. Always include a table at the very top wtih key takeaways, also include lists to make more engaging content. Use Based on the outline: {outline}, create an article. Use {image_urls} with the image name inside [] and with the link from {image_urls} in order to enrich the content, create a pillar page about this topic. Use the brand images and internal links gathered from {get_internal_links}. Use {research_info} to make the pilalr page more relevant. The end product shuold look like {brand_plan_file_id} as an example"
+        article_request = f"ONLY USE INTERNAL LINKS FROM {get_internal_links}You never invent internal links or image links. include real internal links from brandimagesandlinks.txt Based on \n{outline} and Make sure to use a mix of the {image_urls} and brand images. Include highly specific information from {research_results} Use grade 7 level US English. Do not use overly creative or crazy language. Write as if writing for The Guardian newspaper.. Just give information. Don't write like a magazine. Use simple language. Do not invent image links. You are writing from a first person plural perspective for the business, refer to it in the first person plural. Add a key takeaway table at the top of the article, summarzing the main points. Never invent links or brand images Choose 5 internal links and 5 brand images that are relevant to a pillar page and then create a pillar page with good formatting based on the following outline:\n{outline}, Use consulting in the title as this is a consulting service subpage., Title should be around 60 characters. Include the brand images and internal links to other pillar pages naturally and with relevance inside the article. Use markdown formatting and ensure to use tables and lists to add to formatting. Use 3 relevant brand images and pillar pages with internal links maximum. Never invent any internal links.  Include all of the internal links and brand images from {outline} Use different formatting to enrich the pillar page. Always include a table at the very top wtih key takeaways, also include lists to make more engaging content. Use Based on the outline: {outline}, create an article. Use {image_urls} with the image name inside [] and with the link from {image_urls} in order to enrich the content, create a pillar page about this topic. Use the brand images and internal links gathered from {get_internal_links}. Use {research_info} to make the pilalr page more relevant. The end product shuold look like {brand_plan_file_id} as an example"
         client.beta.threads.messages.create(thread_id=thread_id, role="user", content=article_request)
         article_run = client.beta.threads.runs.create(thread_id=thread_id, assistant_id=assistant.id)
         wait_for_run_completion(thread_id, article_run.id)
