@@ -4,6 +4,7 @@ import time
 import csv
 import requests
 from tqdm import tqdm
+import time
 
 # Set your OpenAI API key
 OPENAI_API_TOKEN = "your_api_key"
@@ -95,17 +96,16 @@ def wait_for_run_completion(thread_id, run_id, timeout=300):
         time.sleep(10)
     raise TimeoutError("Run did not complete within the specified timeout.")
 
-def get_internal_links(thread_id, blog_post_idea):
-    print(f"Fetching internal links relevant to: {blog_post_idea}")
-    get_request = f"Use Retrieval. Read brandimagesandlinks.txt, Choose 5 relevant pages, their links and their respective images, that are relevant to {blog_post_idea}. Don't have more than 5."
-    client.beta.threads.messages.create(thread_id=thread_id, role="user", content=get_request)
-    get_request_run = client.beta.threads.runs.create(thread_id=thread_id, assistant_id=assistant.id)
-    wait_for_run_completion(thread_id, get_request_run.id)
-    messages = client.beta.threads.messages.list(thread_id=thread_id)
-    print("Internal links fetched successfully.")
-    return next((m.content for m in messages.data if m.role == "assistant"), None)
-
-def perplexity_research(blog_post_idea):
+def perplexity_research(blog_post_idea, max_retries=3, delay=5):
+    """
+    Conducts perplexity research with retries on failure.
+    Args:
+        blog_post_idea (str): The blog post idea to research.
+        max_retries (int): Maximum number of retries.
+        delay (int): Delay in seconds before retrying.
+    Returns:
+        dict or None: The response from the API or None if failed.
+    """
     print(f"Starting perplexity research for: {blog_post_idea}")
     url = "https://api.perplexity.ai/chat/completions"
     payload = {
@@ -127,18 +127,31 @@ def perplexity_research(blog_post_idea):
         "authorization": "Bearer your_api_key"
     }
 
-    response = requests.post(url, json=payload, headers=headers)
+    for attempt in range(max_retries):
+        response = requests.post(url, json=payload, headers=headers)
+        if response.status_code == 200:
+            print("Perplexity research completed successfully.")
+            try:
+                return response.json()
+            except ValueError:
+                print("JSON decoding failed")
+                return None
+        else:
+            print(f"Perplexity research failed with status code: {response.status_code}. Attempt {attempt + 1} of {max_retries}.")
+            time.sleep(delay)
 
-    if response.status_code == 200:
-        print("Perplexity research completed successfully.")
-    else:
-        print(f"Perplexity research failed with status code: {response.status_code}")
+    print("Perplexity research failed after maximum retries.")
+    return None
 
-    try:
-        return response.json()
-    except ValueError:
-        print("JSON decoding failed")
-        return None
+def get_internal_links(thread_id, blog_post_idea):
+    print(f"Fetching internal links relevant to: {blog_post_idea}")
+    get_request = f"Use Retrieval. Read brandimagesandlinks.txt, Choose 5 relevant pages, their links and their respective images, that are relevant to {blog_post_idea}. Don't have more than 5."
+    client.beta.threads.messages.create(thread_id=thread_id, role="user", content=get_request)
+    get_request_run = client.beta.threads.runs.create(thread_id=thread_id, assistant_id=assistant.id)
+    wait_for_run_completion(thread_id, get_request_run.id)
+    messages = client.beta.threads.messages.list(thread_id=thread_id)
+    print("Internal links fetched successfully.")
+    return next((m.content for m in messages.data if m.role == "assistant"), None)
 
 def create_data_vis(thread_id, perplexity_research, blog_post_idea):
     print("Creating data visualizations...")
