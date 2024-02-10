@@ -5,9 +5,10 @@
     "business_name": "YOUR_BUSINESS_NAME",
     "page_type": "PAGE_TYPE_HERE", 
     "business_type": "BUSINESS_TYPE_HERE",
-    "path_to_image_file": "path_to_image_file",
+    "path_to_links_file": "path_to_image_file",
     "path_to_example_file": "path_to_example_file",
     "path_to_plan_csv": "path_to_plan_csv",
+    "path_to_website_images": "path_to_images",
     "language": "LANGUAGE_HERE",
     "country": "COUNTRY_HERE",
     "tone": "TONE_HERE"
