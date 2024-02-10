@@ -1,14 +1,15 @@
 {
-    "OPENAI_API_TOKEN": "YOUR_OPENAI_API_TOKEN",
-    "FREEIMAGE_HOST_API_KEY": "YOUR_OPENAI_API_TOKEN",
-    "PERPLEXITY_API_KEY": "YOUR_PERPLEXITY_API_TOKEN",
-    "business_name": "YOUR_BUSINESS_NAME",
-    "page_type": "PAGE_TYPE_HERE", 
-    "business_type": "BUSINESS_TYPE_HERE",
-    "path_to_image_file": "path_to_image_file",
-    "path_to_example_file": "path_to_example_file",
-    "path_to_plan_csv": "path_to_plan_csv",
-    "language": "LANGUAGE_HERE",
-    "country": "COUNTRY_HERE",
-    "tone": "TONE_HERE"
+    "OPENAI_API_TOKEN": "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",
+    "FREEIMAGE_HOST_API_KEY": "6d207e02198a847aa98d0a2a901485a5",
+    "PERPLEXITY_API_KEY": "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",
+    "business_name": "2Men",
+    "page_type": "Blog Post", 
+    "business_type": "Classic Menswear Ecommerce Store",
+    "path_to_image_file": "brandimagesandlinks.txt",
+    "path_to_example_file": "example.txt",
+    "path_to_plan_csv": "keywords.csv",
+    "language": "English",
+    "country": "United States",
+    "tone": "Professional",
+    "sitemap": "sitemap_products_1 (30).xml"
   }
