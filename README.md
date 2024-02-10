@@ -2,6 +2,8 @@
 
 Firstly check out Income Stream Surfers on YouTube. There will be a few videos on how to use this script.
 
+The best and easiest way to use this script is to use simplemode.py inside the simple folder. I can't seem to delete anything else from GitHub.
+
 This is really powerful because we can use retrieval with some relevant files and upload them at the start of each thread, we can then use these files to create contextually relevant blog posts with very little effort, but with products and internal links already inside.
 
 ## Step 1 - Products
