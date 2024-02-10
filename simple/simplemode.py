@@ -194,7 +194,7 @@ def create_data_vis(thread_id, perplexity_research, Keyword):
         else:
             print(f"No image file found in response for visualization {_+1}. Attempt aborted.")
 
-def process_blog_post(thread_id, Keyword, create_data_vis):
+def process_blog_post(thread_id, Keyword):
     print(f"Processing blog post for: {Keyword}")
     research_results = perplexity_research(Keyword)
     research_info = str(research_results)    
