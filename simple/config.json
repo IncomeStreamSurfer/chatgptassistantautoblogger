@@ -1,0 +1,14 @@
+{
+    "OPENAI_API_TOKEN": "YOUR_OPENAI_API_TOKEN",
+    "FREEIMAGE_HOST_API_KEY": "YOUR_OPENAI_API_TOKEN",
+    "PERPLEXITY_API_KEY": "YOUR_PERPLEXITY_API_TOKEN",
+    "business_name": "YOUR_BUSINESS_NAME",
+    "page_type": "PAGE_TYPE_HERE", 
+    "business_type": "BUSINESS_TYPE_HERE",
+    "path_to_image_file": "path_to_image_file",
+    "path_to_example_file": "path_to_example_file",
+    "path_to_plan_csv": "path_to_plan_csv",
+    "language": "LANGUAGE_HERE",
+    "country": "COUNTRY_HERE",
+    "tone": "TONE_HERE"
+  }
