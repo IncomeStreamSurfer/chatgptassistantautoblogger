@@ -2,9 +2,17 @@ import pandas as pd
 import openai
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from tqdm.auto import tqdm
+import json
 
-# Your OpenAI API key
-openai.api_key = 'YOUR_API_KEY_HERE'
+
+# Load configuration from a JSON file
+with open('config.json') as config_file:
+    config = json.load(config_file)
+
+# Set your OpenAI API key from the config file
+OPENAI_API_TOKEN = config["OPENAI_API_TOKEN"]
+print("Setting OpenAI API Key...")
+openai.api_key = config["OPENAI_API_TOKEN"]
 
 # Define the formatting function with custom prompts
 def format_article(text):
@@ -49,7 +57,7 @@ def format_articles_concurrently(df, column_name):
 
 # Load your CSV file
 print("Loading CSV file...")
-df = pd.read_csv("processed_content_plan.csv")  # Replace 'your_csv_file.csv' with the actual file path
+df = pd.read_csv("processed_keywords.csv")  # Replace 'your_csv_file.csv' with the actual file path
 
 # Apply concurrent formatting to the "Article" column
 print("Starting concurrent formatting of 'Article' column.")
