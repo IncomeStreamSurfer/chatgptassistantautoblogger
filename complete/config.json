@@ -1,0 +1,18 @@
+{
+  "wordpress_url": "{{wordpress_url}}",
+  "user_id": "{{user_id}}",
+  "user_app_password": "{{user_app_password}}",
+  "OPENAI_API_TOKEN": "{{OPENAI_API_TOKEN}}",
+  "FREEIMAGE_HOST_API_KEY": "{{FREEIMAGE_HOST_API_KEY}}",
+  "PERPLEXITY_API_KEY": "{{PERPLEXITY_API_KEY}}",
+  "business_name": "{{business_name}}",
+  "page_type": "{{page_type}}",
+  "business_type": "{{business_type}}",
+  "path_to_image_file": "{{path_to_image_file}}",
+  "path_to_example_file": "{{path_to_example_file}}",
+  "path_to_plan_csv": "{{path_to_plan_csv}}",
+  "language": "{{language}}",
+  "country": "{{country}}",
+  "tone": "{{tone}}",
+  "sitemap": "{{sitemap}}"
+}
