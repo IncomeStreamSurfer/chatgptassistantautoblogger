@@ -10,7 +10,6 @@
 
 
 
-
 import os
 import openai
 import time
@@ -19,8 +18,6 @@ import requests
 from tqdm import tqdm
 import concurrent.futures
 import json
-from PIL import Image
-from io import BytesIO
 
 # Load configuration from a JSON file
 with open('config.json') as config_file:
@@ -38,33 +35,14 @@ FREEIMAGE_HOST_API_KEY = config["FREEIMAGE_HOST_API_KEY"]
 print("Initializing OpenAI client...")
 client = openai.OpenAI()
 
-def generate_and_save_image(keyword, directory="generated_images"):
-    prompt = f"A Visual, unadorned image-only representation of {keyword}. Focus on aesthetics and corporate imagery."
-    response = client.images.generate(
-        model="dall-e-3",
-        prompt=prompt,
-        n=1,
-        size="1792x1024"
-    )
-    time.sleep(2)  # Manage rate limit
-    image_url = response.data[0].url
-    image_response = requests.get(image_url)
-    image = Image.open(BytesIO(image_response.content))
-
-    # Ensure the directory exists
-    os.makedirs(directory, exist_ok=True)
-
-    # Define the local path for saving the image
-    image_path = os.path.join(directory, f"{keyword.replace(' ', '_')}.png")
-    
-    # Save the image locally
-    image.save(image_path)
-    
-    return image_path
-
+# Global list to store image URLs
 image_urls = []
 
 def upload_to_freeimage_host(image_path, Keyword):
+    """
+    Uploads an image to Freeimage.host with {Keyword} in the filename.
+    Also stores the image URL in a global list.
+    """
     print(f"Uploading {image_path} to Freeimage.host...")
     with open(image_path, 'rb') as image_file:
         files = {'source': image_file}
@@ -72,17 +50,16 @@ def upload_to_freeimage_host(image_path, Keyword):
             'key': FREEIMAGE_HOST_API_KEY,
             'action': 'upload',
             'format': 'json',
-            'name': f'{Keyword}_image.png'
+            'name': f'{Keyword}_image.png'  # Add {Keyword} in the filename
         }
         
         response = requests.post('https://freeimage.host/api/1/upload', files=files, data=data)
-        time.sleep(2)  # Manage rate limit
         
         if response.status_code == 200:
             url = response.json().get('image', {}).get('url', '')
             if url:
                 print(f"Uploaded successfully: {url}")
-                image_urls.append({'idea': Keyword, 'url': url})
+                image_urls.append({'idea': Keyword, 'url': url})  # Store both idea and URL
                 return url
             else:
                 print("Upload successful but no URL returned, something went wrong.")
@@ -94,29 +71,33 @@ def upload_file(file_path, purpose):
     print(f"Uploading file: {file_path} for purpose: {purpose}")
     with open(file_path, "rb") as file:
         response = client.files.create(file=file, purpose=purpose)
-        time.sleep(2)  # Manage rate limit
     print(f"File uploaded successfully, ID: {response.id}")
     return response.id
 
 def clear_image_urls():
+    """
+    Clears the global list of image URLs.
+    """
     global image_urls
     image_urls.clear()
     print("Cleared global image URLs.")
 
 print("Commencing file uploads...")
+# Upload your files using paths from the config file
 internal_links_file_id = upload_file(config["path_to_example_file"], 'assistants')
 content_plan_file_id = upload_file(config["path_to_plan_csv"], 'assistants')
 brand_plan_file_id = upload_file(config["path_to_example_file"], 'assistants')
 brand_logo_file_id = upload_file(config["path_to_image_file"], 'assistants')
 
+# Create an Assistant
 print("Creating OpenAI Assistant...")
 assistant = client.beta.assistants.create(
     name="Content Creation Assistant",
     model="gpt-4-turbo-preview",
- instructions=f"You are writing for {config['business_name']}. Choose images and internal links from {config['path_to_image_file']} and embed them with markdown in the final article. You must never EVER invent internal links or image links as this can destroy my SEO. YOU MUST INCLUDE INTERNAL LINKS FROM {config['path_to_image_file']} - read this first and make sure to include real internal links in the final article in the blog post When told to use retrieval use retrieval, when told to use code_interpreter use code interpreter. The final content should include internal links and embedded product images from {config['path_to_image_file']} and should include formatting. Your basic steps are: 1. read {config['path_to_image_file']}, get the image, create some visualizations of data, store these for the final article. 2. Find relevant brand images and internal links from {config['path_to_image_file']}, create an outline, then write an article with all of this data you've either created or found Copy the tone from {config['path_to_example_file']} EXACTLY. Read {config['path_to_example_file']}. Use this as a guide to shape the final {config['page_type']}. The {config['page_type']} should follow the length and tone of {config['path_to_example_file']}. You are SEOGPT, aiming to create in-depth and interesting blog posts for {config['business_name']}, an {config['business_type']} in {config['country']}, you should write at a grade 7 level {config['language']} Every blog post should include at least 3 product images and links to their other pages from {config['business_name']}.. Ensure the brand image links are accurate. Choose only relevant brand pages. Do not invent image links. Pick 5 strictly relevant brand images and internal links for the articles. First, read the attached files, then create a detailed outline for a {config['page_type']}, including up to 5 highly relevant internal collection links and brand image links.",    tools=[{"type": "retrieval"}, {"type": "code_interpreter"}],
+    instructions=f"You are writing for {config['business_name']}. Choose images and internal links from {config['path_to_image_file']} and embed them with markdown in the final article. You must never EVER invent internal links or image links as this can destroy my SEO. YOU MUST INCLUDE INTERNAL LINKS FROM {config['path_to_image_file']} - read this first and make sure to include real internal links in the final article in the blog post When told to use retrieval use retrieval, when told to use code_interpreter use code interpreter. The final content should include internal links and embedded product images from {config['path_to_image_file']} and should include formatting. Your basic steps are: 1. read {config['path_to_image_file']}, get the image, create some visualizations of data, store these for the final article. 2. Find relevant brand images and internal links from {config['path_to_image_file']}, create an outline, then write an article with all of this data you've either created or found Copy the tone from {config['path_to_example_file']} EXACTLY. Read {config['path_to_example_file']}. Use this as a guide to shape the final {config['page_type']}. The {config['page_type']} should follow the length and tone of {config['path_to_example_file']}. You are SEOGPT, aiming to create in-depth and interesting blog posts for {config['business_name']}, an {config['business_type']} in {config['country']}, you should write at a grade 7 level {config['language']} Every blog post should include at least 3 product images and links to their other pages from {config['business_name']}.. Ensure the brand image links are accurate. Choose only relevant brand pages. Do not invent image links. Pick 5 strictly relevant brand images and internal links for the articles. First, read the attached files, then create a detailed outline for a {config['page_type']}, including up to 5 highly relevant internal collection links and brand image links.",
+    tools=[{"type": "retrieval"}, {"type": "code_interpreter"}],
     file_ids=[internal_links_file_id, content_plan_file_id, brand_plan_file_id, brand_logo_file_id]
 )
-time.sleep(2)  # Manage rate limit
 
 print("Assistant created successfully.")
 
@@ -128,10 +109,19 @@ def wait_for_run_completion(thread_id, run_id, timeout=300):
         if run_status.status == 'completed':
             print("Run completed successfully.")
             return run_status
-        time.sleep(10)  # Check status every 10 seconds
+        time.sleep(10)
     raise TimeoutError("Run did not complete within the specified timeout.")
 
 def perplexity_research(Keyword, max_retries=3, delay=5):
+    """
+    Conducts perplexity research with retries on failure.
+    Args:
+        Keyword (str): The blog post idea to research.
+        max_retries (int): Maximum number of retries.
+        delay (int): Delay in seconds before retrying.
+    Returns:
+        dict or None: The response from the API or None if failed.
+    """
     print(f"Starting perplexity research for: {Keyword}")
     url = "https://api.perplexity.ai/chat/completions"
     payload = {
@@ -155,8 +145,6 @@ def perplexity_research(Keyword, max_retries=3, delay=5):
 
     for attempt in range(max_retries):
         response = requests.post(url, json=payload, headers=headers)
-        time.sleep(delay)  # Manage rate limit
-        
         if response.status_code == 200:
             print("Perplexity research completed successfully.")
             try:
@@ -166,6 +154,8 @@ def perplexity_research(Keyword, max_retries=3, delay=5):
                 return None
         else:
             print(f"Perplexity research failed with status code: {response.status_code}. Attempt {attempt + 1} of {max_retries}.")
+            time.sleep(delay)
+
     print("Perplexity research failed after maximum retries.")
     return None
 
@@ -227,7 +217,7 @@ def process_blog_post(thread_id, Keyword):
 
     article = None
     if outline:
-        article_request = f"Write a long-form detailed article with data from {perplexity_research} {config['language']} Write at a grade 7 level. ONLY USE INTERNAL LINKS FROM {internal_links} You never invent internal links or image links. Include images from {create_data_vis} also include real internal links from brandimagesandlinks.txt Based on \n{outline} and Make sure to use a mix of the {images_for_request} and brand images. Include highly specific information from {research_results}. Do not use overly creative or crazy language. Use a {config['tone']} tone of voice. Write as if writing for The Guardian newspaper.. Just give information. Don't write like a magazine. Use simple language. Do not invent image links. You are writing from a first person plural perspective for the business, refer to it in the first person plural. Add a key takeaway table at the top of the article, summarzing the main points. Never invent links or brand images Choose 5 internal links and 5 brand images that are relevant to a pillar page and then create a pillar page with good formatting based on the following outline:\n{outline}, Title should be around 60 characters. Include the brand images and internal links to other pillar pages naturally and with relevance inside the {config['page_type']}. Use markdown formatting and ensure to use tables and lists to add to formatting. Use 3 relevant brand images and pillar pages with internal links maximum. Never invent any internal links.  Include all of the internal links and brand images from {outline} Use different formatting to enrich the pillar page. Always include a table at the very top wtih key takeaways, also include lists to make more engaging content. Use Based on the outline: {outline}, create an article. Use {images_for_request} with the image name inside [] and with the link from {images_for_request} in order to enrich the content, create a pillar page about this topic. Use the brand images and internal links gathered from {internal_links}. Use {research_info} to make the  more relevant. The end product shuold look like {config['path_to_example_file']} as an example"
+        article_request = f"Write a short, snappy article in {config['language']} Write at a grade 7 level. ONLY USE INTERNAL LINKS FROM {internal_links} You never invent internal links or image links. Include images from {create_data_vis} also include real internal links from brandimagesandlinks.txt Based on \n{outline} and Make sure to use a mix of the {images_for_request} and brand images. Include highly specific information from {research_results}. Do not use overly creative or crazy language. Use a {config['tone']} tone of voice. Write as if writing for The Guardian newspaper.. Just give information. Don't write like a magazine. Use simple language. Do not invent image links. You are writing from a first person plural perspective for the business, refer to it in the first person plural. Add a key takeaway table at the top of the article, summarzing the main points. Never invent links or brand images Choose 5 internal links and 5 brand images that are relevant to a pillar page and then create a pillar page with good formatting based on the following outline:\n{outline}, Title should be around 60 characters. Include the brand images and internal links to other pillar pages naturally and with relevance inside the {config['page_type']}. Use markdown formatting and ensure to use tables and lists to add to formatting. Use 3 relevant brand images and pillar pages with internal links maximum. Never invent any internal links.  Include all of the internal links and brand images from {outline} Use different formatting to enrich the pillar page. Always include a table at the very top wtih key takeaways, also include lists to make more engaging content. Use Based on the outline: {outline}, create an article. Use {images_for_request} with the image name inside [] and with the link from {images_for_request} in order to enrich the content, create a pillar page about this topic. Use the brand images and internal links gathered from {internal_links}. Use {research_info} to make the  more relevant. The end product shuold look like {config['path_to_example_file']} as an example"
         client.beta.threads.messages.create(thread_id=thread_id, role="user", content=article_request)
         article_run = client.beta.threads.runs.create(thread_id=thread_id, assistant_id=assistant.id)
         wait_for_run_completion(thread_id, article_run.id)
@@ -243,48 +233,54 @@ def process_blog_post(thread_id, Keyword):
 
 def process_keywords_concurrent():
     input_file = 'keywords.csv'
-    output_file = 'processed_keywords_with_images.csv'
+    output_file = 'processed_keywords.csv'
 
-    fieldnames = ['Keyword', 'Outline', 'Article', 'Processed', 'Image_Path']
+    # Corrected fieldnames array to include a missing comma and ensure it matches expected output
+    fieldnames = ['Keyword', 'Outline', 'Article', 'Processed']
 
+    # Read all rows to be processed
     with open(input_file, newline='', encoding='utf-8') as csvfile:
         reader = csv.DictReader(csvfile)
         rows_to_process = [row for row in reader]
 
+    # Process each blog post idea concurrently
     with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
-        future_to_image = {executor.submit(generate_and_save_image, row['Keyword']): row for row in rows_to_process}
-        future_to_post = {executor.submit(process_blog_post, client.beta.threads.create().id, row['Keyword']): row for row in rows_to_process}
-
+        future_to_row = {executor.submit(process_blog_post, client.beta.threads.create().id, row['Keyword']): row for row in rows_to_process}
+        
+        # Initialize tqdm progress bar
+        progress = tqdm(concurrent.futures.as_completed(future_to_row), total=len(rows_to_process), desc="Processing Keywords")
+        
+        # Collect results first to avoid writing to the file inside the loop
         results = []
-        for future in tqdm(concurrent.futures.as_completed(future_to_image), total=len(rows_to_process), desc="Generating Images"):
-            row = future_to_image[future]
+        for future in progress:
+            row = future_to_row[future]
             try:
-                image_path = future.result()
-                row['Image_Path'] = image_path
+                outline, article = future.result()  # Assuming this returns an outline and an article
+                # Create a new dictionary for CSV output to ensure it matches the specified fieldnames
+                processed_row = {
+                    'Keyword': row['Keyword'],
+                    'Outline': outline,
+                    'Article': article,
+                    'Processed': 'Yes'
+                }
+                results.append(processed_row)
             except Exception as exc:
-                print(f'Image generation failed for {row["Keyword"]}: {exc}')
-                row['Image_Path'] = 'Failed'
+                print(f'Keyword {row["Keyword"]} generated an exception: {exc}')
+                # Handle failed processing by marking as 'Failed' but still match the fieldnames
+                processed_row = {
+                    'Keyword': row['Keyword'],
+                    'Outline': '',  # or you might use 'N/A' or similar placeholder
+                    'Article': '',  # same as above
+                    'Processed': 'Failed'
+                }
+                results.append(processed_row)
 
-        for future in tqdm(concurrent.futures.as_completed(future_to_post), total=len(rows_to_process), desc="Generating Posts"):
-            row = future_to_post[future]
-            try:
-                outline, article = future.result()
-                row['Outline'] = outline
-                row['Article'] = article
-                row['Processed'] = 'Yes'
-            except Exception as exc:
-                print(f'Post generation failed for {row["Keyword"]}: {exc}')
-                row['Outline'] = 'N/A'
-                row['Article'] = 'N/A'
-                row['Processed'] = 'Failed'
-
-            results.append(row)
-
-    with open(output_file, 'w', newline='', encoding='utf-8') as f_output:
+    # Write all results to the output file after processing
+    with open(output_file, 'w', newline='', encoding='utf-8') as f_output:  # Use 'w' to overwrite or create anew
         writer = csv.DictWriter(f_output, fieldnames=fieldnames)
         writer.writeheader()
-        for row in results:
-            writer.writerow(row)
+        writer.writerows(results)
 
+# Example usage
 if __name__ == "__main__":
     process_keywords_concurrent()
