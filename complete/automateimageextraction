@@ -1,0 +1,117 @@
+import requests
+from bs4 import BeautifulSoup
+import json
+
+def get_images_and_titles_from_collection(url):
+    products = []
+
+# Take a keyword
+# Find relevant collection/category URLs and output into a content plan
+# Extract images from those collections and also output into a content plan
+# Feed the content plan to simplemode.py
+# Run the final output through format.py
+# Creates a csv with keyword, suggested products, suggested internal links.
+
+    response = requests.get(url)
+    if response.status_code == 200:
+        soup = BeautifulSoup(response.content, 'html.parser')
+        
+        # Handling for 2men.it like structures
+        media_divs = soup.find_all("div", class_="card__media")
+        for div in media_divs:
+            process_media_div(div, products)
+        
+        # Handling for DapperFam like structures
+        product_cards = soup.find_all('product-card', class_='product-card')
+        for card in product_cards:
+            process_product_card(card, products)
+
+        # Handling for custom Shopify structures like safesandmore
+        product_wraps = soup.find_all("div", class_="product-wrap")
+        for wrap in product_wraps:
+            process_product_wrap(wrap, products)
+
+        # Handling for structured data (JSON-LD) like WOOX
+        script_tags = soup.find_all('script', type='application/ld+json')
+        for script in script_tags:
+            if script.string:  # Ensure the script tag contains content
+                try:
+                    data = json.loads(script.string)
+                    if data["@type"] == "ItemList":
+                        for item in data["itemListElement"]:
+                            title = item.get("name", "No title available")
+                            product_url = item.get("url", "")
+                            products.append({"title": title, "product_url": product_url})
+                except json.JSONDecodeError:
+                    continue
+    else:
+        print("Failed to retrieve the page.")
+
+    return products
+
+def process_media_div(div, products):
+    img_tags = div.find_all("img")
+    for img in img_tags:
+        srcset = img.get("srcset")
+        if srcset:
+            srcset_items = srcset.split(", ")
+            image_url = select_preferred_image(srcset_items)
+            title = img.get("alt", "No title available")
+            products.append({"title": title, "image_url": image_url})
+
+def process_product_card(card, products):
+    a_tag = card.find("a", class_="product-featured-image-link")
+    if a_tag:
+        title = a_tag.get('title', "No title available")
+        img_tag = a_tag.find("img")
+        if img_tag:
+            srcset = img_tag.get("data-srcset") or img_tag.get("srcset")
+            if srcset:
+                srcset_items = srcset.split(", ")
+                image_url = select_preferred_image(srcset_items)
+                products.append({"title": title, "image_url": image_url})
+
+def process_product_wrap(wrap, products):
+    a_tags = wrap.find_all("a")
+    for a in a_tags:
+        img_tag = a.find("img")
+        if img_tag:
+            title = img_tag.get("alt", "No title available")
+            image_url = img_tag.get("data-src") or img_tag.get("src")
+            if image_url:
+                products.append({"title": title, "image_url": image_url})
+
+def extract_image_from_srcset(img, title, products):
+    srcset = img.get("data-srcset") or img.get("srcset")
+    if srcset:
+        srcsets = srcset.split(", ")
+        image_url = select_preferred_image(srcsets)
+        products.append({"title": title, "image_url": image_url})
+
+def select_preferred_image(srcsets):
+    preferred_widths = ["2000w", "1200w", "800w", "600w", "400w", "200w"]
+    for width in preferred_widths:
+        for srcset in srcsets:
+            if width in srcset:
+                return srcset.split(" ")[0]
+    return srcsets[-1].split(" ")[0]  # Fallback to the last image
+
+# Example URLs including safesandmore
+urls = [
+    "https://2men.it/collections/blue-jeans",
+    "https://www.dapperfam.com/collections/mens-best-sellers",
+    "https://wooxstore.com/collections/long-range-stocks-and-chassis",
+    "https://safesandmore.com/collections/home-safes"
+]
+
+for url in urls:
+    print(f"Fetching products from: {url}")
+    products = get_images_and_titles_from_collection(url)
+    for product in products:
+        if 'image_url' in product:
+            print(f"Title: {product['title']}, Image URL: {product['image_url']}")
+        elif 'product_url' in product:
+            print(f"Title: {product['title']}, Product URL: {product['product_url']}")
+        else:
+            print(f"Title: {product['title']}, URL: URL not available")
+    print("\n")  # Separate output for different URLs
