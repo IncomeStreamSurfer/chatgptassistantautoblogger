@@ -1,3 +1,5 @@
+> **Free community:** the current version of this, plus my other Claude Code skills, prompts and courses, is in my free Skool community: https://www.skool.com/iss-ai-automation-school-6342/about
+
 ## How to autoblog using the ChatGPT Assistant's API
 
 Firstly check out Income Stream Surfers on YouTube. There will be a few videos on how to use this script.
